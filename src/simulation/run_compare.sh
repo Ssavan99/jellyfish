@@ -18,6 +18,13 @@ do
 		num_clients=$(( ${num_gpus} * ${i} ))
 		echo "Experiment: ${algo_comparision}_${num_gpus}_${num_clients}"
 
+		# added code 
+		echo "Running with ${num_gpus} GPUs, ${num_clients} clients."
+        echo "FPS resolution: 5, Max Batch Size: 8"
+        echo "Using profiled directory: ${root_dir}/pytorch_yolov4/profiles/"
+        echo "Logs available at: ${log_path}/${algo_comparision}_${num_gpus}_${num_clients}.log"
+		#added code end
+
 		python3 ${src_path}/simulation/main_compare.py \
 		  	--num_clients ${num_clients} \
 		  	--num_gpus ${num_gpus} \

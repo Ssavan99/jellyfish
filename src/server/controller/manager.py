@@ -138,6 +138,9 @@ class ControlManager(object):
                 gpu_number = self._clients_mapping[client_id].gpu_number
                 model_number = self._clients_mapping[client_id].model_number
                 batch_size = self._clients_mapping[client_id].batch_count
+
+                logging.debug(f"Client {client_id} mapped to GPU {gpu_number}, "
+                          f"Model {model_number}, Batch size {batch_size}")
         return gpu_number, model_number, batch_size
 
     def clients_next_model(self, client_seq):
@@ -180,7 +183,8 @@ class ControlManager(object):
             # First check for the throughput
             net_throughput = (client_bw / self._env_data.frame_s[model_number])
             if net_throughput <= client_fps:
-                model_number = _backoff(model_number)
+                # model_number = _backoff(model_number)
+                model_number -= 1
                 continue
 
             # Now check for the latency budget
@@ -190,7 +194,8 @@ class ControlManager(object):
                 data_size, client_bw, client_lat_wire)
             budget = client_slo - lat_net - server_overhead
             if budget < (2 * latency_model):
-                model_number = _backoff(model_number)
+                # model_number = _backoff(model_number)
+                model_number -= 1
                 continue
 
             break
@@ -250,11 +255,24 @@ class ControlManager(object):
             self._scheduler_run_event.clear()
 
     def _run_scheduler_for_bw_change(self, prev_bw, curr_bw):
-        _DELTA_BW = 2.5 * 1024  # kbps
-        if abs(curr_bw - prev_bw) >= _DELTA_BW:
+        # _DELTA_BW = 2.5 * 1024  # kbps
+        # if abs(curr_bw - prev_bw) >= _DELTA_BW:
+        #     self._scheduler_run_event.set()
+        #     logging.debug(f"Scheduler run triggered due to bw change:"
+        #                   f" Previous {prev_bw}, Current {curr_bw}")
+        """
+        Triggers the scheduler when bandwidth changes significantly.
+        Adds support for high-priority clients to have stricter thresholds.
+        """
+        # Configurable thresholds
+        _DELTA_BW_HIGH_PRIORITY = 1.5 * 1024  # kbps
+        _DELTA_BW_NORMAL = 2.5 * 1024  # kbps
+
+        threshold = _DELTA_BW_HIGH_PRIORITY if priority else _DELTA_BW_NORMAL
+        if abs(curr_bw - prev_bw) >= threshold:
             self._scheduler_run_event.set()
-            logging.debug(f"Scheduler run triggered due to bw change:"
-                          f" Previous {prev_bw}, Current {curr_bw}")
+            logging.debug(f"Scheduler triggered due to BW change: "
+                        f"Previous {prev_bw}, Current {curr_bw}, Priority {priority}")
 
     def _get_client(self, client_seq):
         client_id = Client.getIdString(client_seq)
@@ -288,6 +306,8 @@ class ControlManager(object):
 
         # TODO: Check if we need to run the scheduler due to the bw change
         # self._run_scheduler_for_bw_change(prev_bw, curr_bw)
+        priority = client.slo < 100  # Example: Priority if SLO < 100ms
+        self._run_scheduler_for_bw_change(prev_bw, curr_bw, priority)
 
     def save_response_stats(self, client_seq, response_size, metadata):
         client, client_lock = self._get_client(client_seq)
@@ -501,12 +521,17 @@ class DNNModel:
             return False
 
         # Increase batch count for larger batch size preference
-        for next_batch_count in range(batch_count + 1, self.max_batch_size):
-            if (self._check_throughput_constraint(total_rate, next_batch_count) and
-                    self._check_latency_constraint(new_client, next_batch_count)):
-                batch_count = next_batch_count
-            else:
-                break
+        # for next_batch_count in range(batch_count + 1, self.max_batch_size):
+        #     if (self._check_throughput_constraint(total_rate, next_batch_count) and
+        #             self._check_latency_constraint(new_client, next_batch_count)):
+        #         batch_count = next_batch_count
+        #     else:
+        #         break
+        for next_batch_count in range(batch_count - 1, 0, -1):
+        if (self._check_throughput_constraint(total_rate, next_batch_count) and
+                self._check_latency_constraint(new_client, next_batch_count)):
+            batch_count = next_batch_count
+            break
 
         self.batch_count = batch_count
         self.assigned_clients.append(new_client)

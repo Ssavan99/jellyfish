@@ -39,7 +39,11 @@ class FrameMetadata(object):
         self.used_model = -1
         self.next_model = -1
         self.gpu_number = -1
-
+        '''added code'''
+        # New fields for adaptability
+        self.rate_adjustment_flag = False
+        self.adjustment_factor = 1.0
+        '''added code ends'''
         # TODO: Large number of fields might slow down the queue
         # transfer between two processes.
         self.request_size = 0
@@ -117,6 +121,13 @@ class ModelServingServicer(predict_pb2_grpc.ModelServingServicer):
                 client_send_ts = request.frame_meta.send_timestamp
                 server_recv_ts = time.time()
 
+                '''added code'''
+                # Monitor and throttle request rate
+                if n_requests > 100:  # Example threshold, adjust as needed
+                    logging.warning("High request rate detected, throttling...")
+                    time.sleep(0.01)  # Introduce a small delay
+                '''added code end'''
+
                 metadata = FrameMetadata()
                 metadata.client_id = client_id
                 metadata.frame_id = frame_id
@@ -182,6 +193,14 @@ class ModelServingServicer(predict_pb2_grpc.ModelServingServicer):
                     logging.debug(f"Sending response frame {metadata.frame_id}"
                                   f" for client_{metadata.client_id}")
                     yield response
+
+                    '''code added'''
+                    # Throttle responses if server is overloaded
+                    if n_responses > 500:  # Example threshold
+                        logging.warning("High response rate, delaying...")
+                        time.sleep(0.05)
+                    '''code added ends'''
+
             except Exception as e:
                 logging.error("Response handler exception {}".format(e))
             logging.info(f"Response handler for client {client_id} stopped!")
@@ -265,6 +284,20 @@ class ModelServer(object):
         # start the server
         self.model_server.start()
         logging.info('Model Serving Server running ...')
+
+        '''added code'''
+        # Monitor load and adjust if necessary
+        while True:
+            try:
+                if self.model_server._state.request_count > 1000:  # Example threshold
+                    logging.warning("High load detected, introducing throttling.")
+                    time.sleep(0.1)  # Delay to handle burst requests
+            except Exception as e:
+                logging.error(f"Monitoring error: {e}")
+                break
+            time.sleep(1)  # Adjust monitoring interval
+        '''added code'''
+
         self.model_server.wait_for_termination()
 
     def stop(self):

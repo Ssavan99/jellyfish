@@ -268,13 +268,22 @@ class ModelServingClient(object):
                                                      frame_meta=frame_meta,
                                                      frame_data=frame_data)
 
+        '''added code'''
+        # Dynamic request rate control
+        current_bandwidth = self.controller.get_bw()  # Fetch current bandwidth
+        request_interval = max(MIN_REQUEST_INTERVAL, 1 / current_bandwidth)  # Adjust interval based on bandwidth
+
+        logging.info(f"Sending request with interval: {request_interval:.2f}s (bw: {current_bandwidth:.2f} Mbps)")
+        '''added code end'''
+        
         # Check throttle
         self._throttle()
         metadata.frame_wire_size = predict_request.ByteSize()
         metadata.client_send_req_ts = time.time()
         predict_request.frame_meta.send_timestamp = metadata.client_send_req_ts
         self._request_queue.put(predict_request)
-
+        
+        time.sleep(request_interval)
         return None
 
     def reset(self):

@@ -63,6 +63,7 @@ class Scheduler(mp.Process):
     def _clear_models_info(models_info):
         for _, model in models_info.items():
             model.reset()
+            model.request_rate = 0  # Reset request rate if tracked in models '''added code'''
 
     def run(self):
         ''' runs the scheduler algo whenever it
@@ -74,6 +75,14 @@ class Scheduler(mp.Process):
                 client_info = self._input_queue.get()
                 if client_info is None:
                     continue
+                
+                '''added code'''
+                # Calculate request rates for clients
+                for client_id, client in client_info.items():
+                    client.current_rate = client.fps  # Assuming fps represents request rate
+                    client.rate_timestamp = time.time()
+                '''added code end'''
+                
                 logging.debug("Request to map")
             except (KeyboardInterrupt, SystemExit):
                 break
@@ -90,6 +99,7 @@ class Scheduler(mp.Process):
             mapping_info, _ = self._model_selection_func(simData=self._env_data,
                                                          initialModelsInfo=self._prev_models_info,
                                                          clientsInfo=client_info,
+                                                         clientRates={client.id: client.current_rate for client in client_info.values()}, '''added code'''
                                                          MappingAlgo=self._client_mapping_func,
                                                          shuffleModels=True)
             execution_time = (time.time() - start_time) * 1e3
@@ -98,6 +108,15 @@ class Scheduler(mp.Process):
             logging.debug(mapping_info.print_str())
             logging.debug(mapping_info.metrics.print_str())
             new_models_info = printModelIDsOnGpu(self._prev_models_info)
+            
+            '''added code'''
+            # Adjust scheduling interval based on system load/request rates
+            if mapping_info.metrics.total_requests > self.opts.max_requests_per_interval:
+                self.opts.schedule_interval = max(self.opts.schedule_min_interval, self.opts.schedule_interval * 0.9)
+            else:
+                self.opts.schedule_interval = min(self.opts.schedule_max_interval, self.opts.schedule_interval * 1.1)
+            logging.debug(f"Adjusted scheduling interval: {self.opts.schedule_interval}")
+            '''added code end'''
 
             self._stats.log({'scheduler_run_count': self._scheduler_run_count,
                              'old_models_info': old_models_info,

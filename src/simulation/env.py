@@ -227,13 +227,26 @@ class Client:
         self.throughput_net = np.zeros(self.sim_data.num_models, dtype=float)
 
     def next(self):
-        self.bw = self.bw
+        # self.bw = self.bw
+        # self.update()
+        # Simulate dynamic bandwidth updates
+        self.bw = utils.compute_net_throughput(
+        size=self.sim_data.frame_s[self.sim_data.num_models - 1],  # Use the largest frame size
+        total_time=random.uniform(20, 200),  # Simulated total time in milliseconds
+        wire_time=random.uniform(1, 10)  # Simulated wire time in milliseconds
+        )
+        # Ensure the bandwidth remains within a reasonable range
+        self.bw = max(10 * 1024, min(self.bw, 100 * 1024))  # Restrict bw between 10 Mbps and 100 Mbps
+
+        # Call the update function to recalculate latencies and throughputs
         self.update()
 
     def update(self):
         self._update_lat_net()
         self._update_throughput_net()
         self._update_lat_budget()
+        logging.info(f"Client {self.id} updated: BW={self.bw}, FPS={self.fps}")
+
 
     def _update_lat_net(self):
         for i in range(self.sim_data.num_models):

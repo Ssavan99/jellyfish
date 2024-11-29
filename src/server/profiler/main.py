@@ -48,6 +48,8 @@ class ControlManager(object):
         self._worker_manager = worker_manager
         self._lock = threading.Lock()
         self._client_id_idx = 0
+        self._client_rates = {}  # Store request rates per client
+
 
     def client_mapping(self, client_seq):
         # We use clients = GPUs. And map client_id to the gpu id.
@@ -56,14 +58,24 @@ class ControlManager(object):
     def add_client(self, slo, frame_rate, lat_wire, init_bw):
         with self._lock:
             client_id = self._client_id_idx
-            self._client_id_idx += 1
+            self._client_id_idx += 1     
+            # Store client-specific metadata, including frame rate and bandwidth.
+            self._client_rates[client_id] = request_rate  # Save request rate
         return client_id, 0
 
+
     def remove_client(self, client_id):
-        self._client_id_idx -= 1
+        # self._client_id_idx -= 1
+        with self._lock:
+            if client_id in self._client_rates:
+                del self._client_rates[client_id]
+            self._client_id_idx -= 1
 
     def update_request_metadata(self, client_seq, metadata):
+        # metadata.time_on_network = 1.0
+        # Update metadata with request rate and network parameters
         metadata.time_on_network = 1.0
+        metadata.request_rate = self._client_rates.get(client_seq, 25)  # Default to 25
 
     def clients_next_model(self, client_seq):
         return 0
@@ -100,7 +112,7 @@ class LoadGenerator(threading.Thread):
         self._lock = threading.Lock()
 
         self._client_id, _ = self._dispatcher.register_client(
-            slo=15000, frame_rate=25, lat_wire=1.0, init_bw=10000)
+            slo=15000, frame_rate=25, lat_wire=1.0, init_bw=10000, request_rate=25)
         self._response_handler = threading.Thread(
             target=self._run_response_handler)
         self._response_handler.start()
@@ -140,6 +152,7 @@ class LoadGenerator(threading.Thread):
         metadata.client_bw = 100 * 1024
         metadata.request_size = 10000
         metadata.slo = 15000
+        metadata.request_rate = 25  # Add request rate here
         return metadata
 
     def _wait_for_outstanding(self):

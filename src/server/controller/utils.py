@@ -46,6 +46,11 @@ class MappingMetrics(object):
 
         self.client_metrics(clients_info, clients_map)
         self.model_metrics(models_info, models_map)
+        '''added code'''
+        # Add a new field for tracking request rates
+        self.request_rate = {client_id: client.fps for client_id, client in clients_info.items()}
+        self.adaptation_effectiveness = 0.0
+        '''added code end'''
 
     @staticmethod
     def effective_client(client):
@@ -87,8 +92,13 @@ class MappingMetrics(object):
         accuracy = {}
         total_effective_rate = 0
         total_rejected_rate = 0
+        successfully_served_rate = 0 '''added code'''
         for client_id, model in clients_map.items():
             client = clients_info[client_id]
+            '''added code'''
+            if model:
+                successfully_served_rate += client.fps  # Add served FPS
+            '''added code end'''
             is_effective_client = self.effective_client(client)
             if is_effective_client:
                 total_effective += 1
@@ -104,6 +114,10 @@ class MappingMetrics(object):
             else:
                 assert model is None, print(
                     "Model is not none for ineffective client")
+            '''added code'''
+            if total_effective_rate > 0:
+                self.adaptation_effectiveness = successfully_served_rate / total_effective_rate
+            '''added code end'''
 
         self.effectiveness = 0.0
         self.accuracy_per_request = 0.0
@@ -145,7 +159,8 @@ class MappingMetrics(object):
         fmt_str += "\t{:<20.2f}{:<20.2f}{:<20.2f}{:<20.2f}".format(self.effectiveness,
                                                                    self.accuracy_per_request,
                                                                    self.accuracy_per_client,
-                                                                   self.utilization_avg) + "\n"
+                                                                   self.utilization_avg,
+                                                                   self.adaptation_effectiveness * 100) + "\n"
 
         # Detailed metrics
         fmt_str += "\t" + "-"*40 + "\n"

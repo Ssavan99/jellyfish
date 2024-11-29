@@ -69,6 +69,23 @@ def latency_estimator(latencies):
 
     return latencies
 
+'''added code'''
+def check_adaptation_threshold(latencies, threshold=10.0):
+    '''
+    Checks if latency adaptation is within acceptable bounds.
+    :param latencies: Array of profiled latencies.
+    :param threshold: Threshold in ms for acceptable latency growth.
+    :return: Boolean indicating if adaptation is acceptable.
+    '''
+    violations = 0
+    for model_idx in range(latencies.shape[0]):
+        for batch in range(1, latencies.shape[1]):
+            if latencies[model_idx][batch] - latencies[model_idx][batch-1] > threshold:
+                violations += 1
+                logging.warning(
+                    f"Latency threshold exceeded: Model:{model_idx}, Batch:{batch}, Growth:{latencies[model_idx][batch] - latencies[model_idx][batch-1]}")
+    return violations == 0
+'''added code end'''
 
 def read_profiled_latencies(profiled_dir, total_models, max_batch_size):
     _PERCENTILE = 0.99
@@ -84,8 +101,10 @@ def read_profiled_latencies(profiled_dir, total_models, max_batch_size):
             samples = df_batch["InferenceTime"].iloc[0:]
             latencies[model_number, batch -
                       1] = (samples).quantile(_PERCENTILE) * _SLOWDOWN_FACTOR
+            logging.info(f"Profiled Latency: Model:{model_number}, Batch:{batch}, Latency:{latencies[model_number, batch-1]} ms")
 
     latencies = latency_estimator(latencies)
+    check_adaptation_threshold(latencies) '''added code'''
     return latencies
 
 
