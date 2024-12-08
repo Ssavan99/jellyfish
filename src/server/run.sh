@@ -4,7 +4,7 @@
 : ${src_path="$root_dir/src/"}
 : ${log_path="$root_dir/logs/server/"}
 : ${run_mode="RELEASE"}
-: ${num_gpus=2}
+: ${num_gpus=1}
 
 export PYTHONPATH=${root_dir}
 
@@ -51,6 +51,15 @@ trap handle_sigterm SIGTERM
 
 while [ ${TERMINATE_FLAG} -ne 1 ]
 do 
+	TERMINATE_FLAG=1
+	if [ -f "/opt/miniconda3/etc/profile.d/conda.sh" ]; then
+		. "/opt/miniconda3/etc/profile.d/conda.sh"
+	else
+		export PATH="/opt/miniconda3/bin:$PATH"
+	fi
+
+	conda activate base
+
 	python3 ${src_path}/server/main.py \
 	  --weights_dir "${root_dir}/pytorch_yolov4/models/" \
 	  --model_config_dir "${root_dir}/pytorch_yolov4/models/cfg" \

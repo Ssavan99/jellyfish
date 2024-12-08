@@ -99,7 +99,7 @@ class Scheduler(mp.Process):
             mapping_info, _ = self._model_selection_func(simData=self._env_data,
                                                          initialModelsInfo=self._prev_models_info,
                                                          clientsInfo=client_info,
-                                                         clientRates={client.id: client.current_rate for client in client_info.values()}, '''added code'''
+                                                         clientRates={client.id: client.current_rate for client in client_info.values()},
                                                          MappingAlgo=self._client_mapping_func,
                                                          shuffleModels=True)
             execution_time = (time.time() - start_time) * 1e3

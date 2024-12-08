@@ -16,11 +16,11 @@ if [ $# -eq 6 ]; then
   network_trace_type=$6
 fi
 
-server_root_dir="/home/${server_user}/jellyfish/"
+server_root_dir="/home/${server_user}/jellyfish"
 
 : ${iter:=0}
-: ${expr_manager_root_dir="${HOME}/jellyfish/"}
-: ${log_path="${expr_manager_root_dir}/logs/experiment_manager/"}
+: ${expr_manager_root_dir="${HOME}/jellyfish"}
+: ${log_path="${expr_manager_root_dir}/logs/experiment_manager"}
 [ -e temp_clients_pid.txt ] && rm temp_clients_pid.txt
 
 function get_filename() {
@@ -53,9 +53,9 @@ trap "stop" SIGHUP SIGINT SIGTERM
 
 # Start server first
 # NOTE: Check if ~/.bashrc on the host has commented out to allow non-interactive ssh environment
-# ssh -tt -n $server_user@$server_host -p $server_ssh_port "$server_root_dir/moth/server/run.sh" &
+ssh -tt -n $server_user@$server_host -p $server_ssh_port "$server_root_dir/src/server/run.sh" &
 server_ssh_pid=$!
-sleep 60 # Wait for enough time to start server processes.
+sleep 30 # Wait for enough time to start server processes.
 echo "Server started!"
 
 # Start all clients

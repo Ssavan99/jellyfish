@@ -52,8 +52,6 @@ def _executor(simulate_gpu, gpu_number, profiled_latencies,
             return True, None
         return False, (time.time(), remaining_time)
 
-''''added code ''''
-
     def drop_requests(metadata):
         if processed_frames_queue.qsize() > self.opts.max_queue_size * 0.8:
             logging.warning(f"Dropping request {metadata.frame_id} for client {metadata.client_id} due to overload.")
@@ -74,8 +72,6 @@ def _executor(simulate_gpu, gpu_number, profiled_latencies,
         #     output_queue.put((metadata, None))
 
         # return drop_flag, remaining_time
-        
-''''added code end''''
 
 
     def get_batch_imgs(batch_size, model_number):
@@ -491,7 +487,7 @@ class Worker(mp.Process):
         self._processed_frames_queue.put(None)
         self._stop_process()
         logging.info(f"Worker main thread on gpu {self._gpu_number} stopped!")
-''''added code ''''
+
     def can_accept_request(self):
         """
         Check if the worker can accept new requests without overloading.
@@ -516,13 +512,11 @@ class Worker(mp.Process):
             # Increase batch size for better GPU utilization.
             self._active_batch_size = min(self.opts.max_batch_size, self._active_batch_size + 1)
         logging.info(f"GPU {self._gpu_number}: Adjusted batch size to {self._active_batch_size}.")
-'''added code end'''
-
+        
     def set_desired_model(self, desired_model_number, desired_batch_size):
         # TODO: Avoid communicating to the worker,
         # if there is no change in the model number or the batch size
-        self._control_input_queue.put(
-            (desired_model_number, desired_batch_size))
+        self._control_input_queue.put((desired_model_number, desired_batch_size))
 
     def _loader(self):
         ''' The thread to (un)load models on GPUs '''

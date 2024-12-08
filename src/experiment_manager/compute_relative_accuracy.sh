@@ -12,6 +12,13 @@ gt_dir=$2
 : ${output_det_file="output_dets.json"}
 expr_manager_root_dir="${root_dir}/src/experiment_manager/"
 
+if [ -f "/opt/miniconda3/etc/profile.d/conda.sh" ]; then
+    . "/opt/miniconda3/etc/profile.d/conda.sh"
+else
+    export PATH="/opt/miniconda3/bin:$PATH"
+fi
+conda activate base
+
 # First convert output_det.json to per frame in text file
 [ -e "${det_dir}/output_text_dir" ] || mkdir -p "${det_dir}/output_text_dir"
 rm -r ${det_dir}/output_text_dir/*

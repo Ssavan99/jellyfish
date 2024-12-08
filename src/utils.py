@@ -104,7 +104,7 @@ def read_profiled_latencies(profiled_dir, total_models, max_batch_size):
             logging.info(f"Profiled Latency: Model:{model_number}, Batch:{batch}, Latency:{latencies[model_number, batch-1]} ms")
 
     latencies = latency_estimator(latencies)
-    check_adaptation_threshold(latencies) '''added code'''
+    check_adaptation_threshold(latencies)
     return latencies
 
 

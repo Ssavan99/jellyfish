@@ -21,7 +21,7 @@ CLIENTS="1 2 4 8"
 VIDEOS="dds/trafficcam_1.mp4 dds/trafficcam_2.mp4 dds/trafficcam_3.mp4"
 
 # Prepare clients config files by replacing template values with the actual value
-clients_cfg_dir="${root_dir}/src/experiment_manager/clients_cfg/"
+clients_cfg_dir="${root_dir}/src/experiment_manager/clients_cfg"
 [ -e "${clients_cfg_dir}/.temp/" ] ||  mkdir "${clients_cfg_dir}/.temp/"
 cp ${clients_cfg_dir}/* ${clients_cfg_dir}/.temp/
 find "${clients_cfg_dir}/.temp/" -type f -exec sed -i "s/client_ip/${client_ip}/g" {} \;
@@ -49,6 +49,7 @@ do
             ${clients_cfg_dir}/.temp/client_cfg_template_${clients}_${fps}_${slo}.txt \
             ${video} \
             ${network_trace_type}
+                      echo "Iter: ${iter}, ${clients}_${fps}_${slo} finished"
         done
       done
     done

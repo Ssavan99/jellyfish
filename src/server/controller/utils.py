@@ -92,7 +92,7 @@ class MappingMetrics(object):
         accuracy = {}
         total_effective_rate = 0
         total_rejected_rate = 0
-        successfully_served_rate = 0 '''added code'''
+        successfully_served_rate = 0
         for client_id, model in clients_map.items():
             client = clients_info[client_id]
             '''added code'''

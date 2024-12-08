@@ -11,7 +11,7 @@ from src.utils import FRAME_SIZES
 
 _MAX_MSG_LENGTH = 100 * 1024 * 1024
 START_FRAME, END_FRAME, ID = 0, 1, 2
-
+MIN_REQUEST_INTERVAL=15 #added min request interval
 
 class RequestIterator(object):
     def __init__(self, req_queue: queue.Queue, close_event):

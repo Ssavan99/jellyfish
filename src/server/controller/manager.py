@@ -528,10 +528,10 @@ class DNNModel:
         #     else:
         #         break
         for next_batch_count in range(batch_count - 1, 0, -1):
-        if (self._check_throughput_constraint(total_rate, next_batch_count) and
-                self._check_latency_constraint(new_client, next_batch_count)):
-            batch_count = next_batch_count
-            break
+            if (self._check_throughput_constraint(total_rate, next_batch_count) and
+                    self._check_latency_constraint(new_client, next_batch_count)):
+                batch_count = next_batch_count
+                break
 
         self.batch_count = batch_count
         self.assigned_clients.append(new_client)

@@ -11,8 +11,8 @@ slo=$3
 fps=$4
 video_name=$5
 
-: ${root_dir="$HOME/jellyfish/"}
-: ${src_path="$root_dir/src/"}
+: ${root_dir="$HOME/jellyfish"}
+: ${src_path="$root_dir/src"}
 : ${video_file="${root_dir}/datasets/${video_name}"}
 : ${image_file="${root_dir}/datasets/coco/val2017/image_list_10.txt"}
 : ${model_server_host="$1"}
@@ -24,6 +24,13 @@ export PYTHONPATH=${root_dir}
 export LD_LIBRARY_PATH="$HOME/.local/lib/"
 
 [ -e ${log_path} ] || mkdir -p ${log_path}
+
+if [ -f "/opt/miniconda3/etc/profile.d/conda.sh" ]; then
+    . "/opt/miniconda3/etc/profile.d/conda.sh"
+else
+    export PATH="/opt/miniconda3/bin:$PATH"
+fi
+conda activate base
 
 python3 ${root_dir}/src/client/main.py \
   --slo ${slo} \
