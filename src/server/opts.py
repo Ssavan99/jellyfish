@@ -35,16 +35,6 @@ def argument_parser():
                         help="Use simulated pytorch models")
     parser.set_defaults(simulate_gpu=False)
 
-    '''added code'''
-    #---Throttling and Queue Config---#
-    parser.add_argument('--max_queue_size', type=int, default=100,
-                        help='Maximum size of the request queue before throttling')
-    parser.add_argument('--throttle_threshold', type=float, default=0.8,
-                        help='Threshold (0-1) of queue usage before throttling starts')
-    parser.add_argument('--throttle_delay', type=float, default=0.01,
-                        help='Delay (seconds) introduced during throttling')
-    '''added code end'''
-
     #---Controller config---#
     parser.add_argument('--schedule_interval', type=float, default=10,
                         help='Periodic interval (sec) to run scheduler')
