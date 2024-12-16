@@ -225,12 +225,6 @@ def _executor(simulate_gpu, gpu_number, profiled_latencies,
             metadata_lst, imgs, dummy_count = get_batch_imgs(batch_size,
                                                              model_number)
             batch_time = (time.time() - start_time) * 1e3
-            
-            '''code added'''
-            if processed_frames_queue.qsize() > self.opts.max_queue_size * 0.8:
-                logging.warning(f"GPU {gpu_number} is overloaded. Throttling requests.")
-                time.sleep(0.01)  # Introduce a small delay to reduce queue size.
-            '''code added end'''
 
             if imgs.size != 0 and dummy_count != batch_size:
                 with torch.cuda.stream(cuda_stream):
@@ -465,12 +459,6 @@ class Worker(mp.Process):
                 # cycle_start, pushed_req_count = shape_incoming_requests(
                 #     cycle_start, pushed_req_count)
                 metadata.worker_processing_ts = time.time()
-
-                '''code added'''
-                if time.time() - cycle_start > 1.0:  # Adjust batch size every 1 second.
-                    self.adjust_batch_size()
-                    cycle_start = time.time()
-                '''code added end'''
 
                 logging.debug(f"Received frame {metadata.frame_id} from "
                               f"client {metadata.client_id} on GPU {self._gpu_number} at"
