@@ -60,14 +60,6 @@ class RequestDispatcher(object):
 
         metadata = request[0]
         if gpu is not None:
-
-            '''added code'''
-            # Check for queue overload and throttle if necessary
-            queue_size = self._worker_manager._workers_lst[gpu]._input_queue.qsize()
-            if queue_size > self._worker_manager._workers_lst[gpu].opts.max_queue_size * 0.8:
-                logging.warning(f"GPU {gpu} is overloaded with queue size {queue_size}. Throttling requests.")
-                time.sleep(0.01)  # Small delay to reduce queue pressure
-            '''added code end'''
             self._control_manager.update_request_metadata(client_id, metadata)
             self._worker_manager.schedule(gpu, request)
         else:
@@ -102,18 +94,7 @@ class RequestDispatcher(object):
                     client_id = metadata.client_id
                     self._get_client_queue(client_id).put(response)
 
-            '''added code'''
-            # Adjust response collection interval based on queue sizes
-            avg_queue_size = sum(
-                self._worker_manager._workers_lst[gpu]._output_queue.qsize() for gpu in range(num_gpus)
-            ) / num_gpus
-            if avg_queue_size > 10:  # Example threshold
-                logging.warning("High response queue load detected. Slowing down response handling.")
-                time.sleep(0.01)  # Slow down to manage workload
-            else:
-                time.sleep(0.001)
-            '''added code end'''
-            # time.sleep(0.001)
+            time.sleep(0.001)
 
     def collect_request_stats(self, client_id, request_size, bw, metadata):
         self._control_manager.save_request_stats(
